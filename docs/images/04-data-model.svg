@@ -56,6 +56,9 @@
   <path d="M900 548 H790 C660 548 510 548 390 600" class="rel"/><path d="M380 620 H470" class="rel"/><path d="M780 620 C840 650 870 720 895 770" class="rel"/>
   <path d="M780 265 C850 330 880 480 900 540" class="rel"/>
 
-  <rect x="70" y="790" width="760" height="64" rx="12" class="note"/>
-  <text x="100" y="828" class="text">중요 제약: 좌석 중복 방지 unique(performance_id, section, seat_number), 주문 중복 방지 unique(reservation_id), 결제 재시도 방지 unique(idempotency_key)</text>
+  <rect x="70" y="790" width="760" height="86" rx="12" class="note"/>
+  <text x="100" y="824" class="text">
+    <tspan x="100" dy="0">중요 제약: 좌석 중복 방지 unique(performance_id, section, seat_number)</tspan>
+    <tspan x="100" dy="28">주문 중복 방지 unique(reservation_id), 결제 재시도 방지 unique(idempotency_key)</tspan>
+  </text>
 </svg>
