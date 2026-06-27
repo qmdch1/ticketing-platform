@@ -3,12 +3,12 @@
   <desc id="desc">티켓팅 플랫폼의 외부 사용자, API, 애플리케이션, PostgreSQL, Redis, Kafka, 운영 엔드포인트 구조</desc>
   <defs>
     <style>
-      .bg{fill:#f7f8fb}.title{font:700 42px 'Segoe UI',Arial,sans-serif;fill:#172033}.sub{font:400 20px 'Segoe UI',Arial,sans-serif;fill:#526070}
+      .bg{fill:#f7f8fb}.title{font:700 42px 'Segoe UI',Arial,sans-serif;fill:#111827}.sub{font:600 20px 'Segoe UI',Arial,sans-serif;fill:#243447}
       .box{fill:#fff;stroke:#ccd5e1;stroke-width:2}.primary{fill:#163b6d;stroke:#0f2b50}.accent{fill:#e8f1ff;stroke:#7aa7e8}
-      .label{font:700 22px 'Segoe UI',Arial,sans-serif;fill:#172033}.labelWhite{font:700 24px 'Segoe UI',Arial,sans-serif;fill:#fff}.text{font:400 17px 'Segoe UI',Arial,sans-serif;fill:#3b4654}
-      .arrow{stroke:#526070;stroke-width:3;fill:none;marker-end:url(#arrow)}.note{fill:#fff7e8;stroke:#e2b660;stroke-width:2}.mono{font:600 17px Consolas,monospace;fill:#263445}
+      .label{font:700 22px 'Segoe UI',Arial,sans-serif;fill:#111827}.labelWhite{font:700 24px 'Segoe UI',Arial,sans-serif;fill:#fff}.text{font:600 17px 'Segoe UI',Arial,sans-serif;fill:#1f2937}
+      .arrow{stroke:#334155;stroke-width:3.5;fill:none;marker-end:url(#arrow)}.note{fill:#fff7e8;stroke:#e2b660;stroke-width:2}.mono{font:700 17px Consolas,monospace;fill:#1f2937}
     </style>
-    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#526070"/></marker>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#334155"/></marker>
   </defs>
   <rect class="bg" width="1280" height="720"/>
   <text x="64" y="72" class="title">System Context</text>
@@ -23,9 +23,9 @@
   <rect x="390" y="170" width="500" height="250" rx="16" class="primary"/>
   <text x="490" y="222" class="labelWhite">Ticketing Platform API</text>
   <text x="450" y="270" class="labelWhite">Spring MVC + JPA</text>
-  <text x="450" y="312" class="text" fill="#dbe8ff">ReservationService: 좌석 홀드와 만료</text>
-  <text x="450" y="344" class="text" fill="#dbe8ff">WaitingQueueService: Redis 대기열 토큰</text>
-  <text x="450" y="376" class="text" fill="#dbe8ff">PaymentService: 결제, 티켓 발급, Kafka 이벤트</text>
+  <text x="450" y="312" class="text" fill="#f3f8ff">ReservationService: 좌석 홀드와 만료</text>
+  <text x="450" y="344" class="text" fill="#f3f8ff">WaitingQueueService: Redis 대기열 토큰</text>
+  <text x="450" y="376" class="text" fill="#f3f8ff">PaymentService: 결제, 티켓 발급, Kafka 이벤트</text>
 
   <rect x="990" y="145" width="220" height="130" rx="12" class="box"/>
   <text x="1042" y="195" class="label">PostgreSQL</text>
