@@ -15,6 +15,7 @@
 - 만료된 예약 배치 해제
 - Redis 기반 좌석 조회 캐시
 - Redis Sorted Set 기반 대기열 토큰 발급
+- Redis 대기열 토큰 취소
 - Kafka 기반 티켓 발급 이벤트 발행
 - Flyway 기반 스키마 관리
 - Actuator, Prometheus endpoint 노출
@@ -124,6 +125,12 @@ Content-Type: application/json
 }
 ```
 
+대기열 토큰 취소:
+
+```http
+DELETE /api/v1/performances/11111111-1111-1111-1111-111111111111/waiting-room/tokens/22222222-2222-2222-2222-222222222222
+```
+
 ## 테스트
 
 ```bash
@@ -134,7 +141,7 @@ Content-Type: application/json
 
 - 좌석 선점은 `PESSIMISTIC_WRITE` 락과 정렬된 조회로 중복 판매 가능성을 줄입니다.
 - 좌석 조회 결과는 Redis에 짧게 캐싱하고, 예약/만료/결제 상태 변경 시 캐시를 무효화합니다.
-- 대기열 토큰은 Redis Sorted Set에 순번 기반 score로 저장해 공연별 진입 순서를 계산합니다.
+- 대기열 토큰은 Redis Sorted Set에 순번 기반 score로 저장하고, 고객별 member 매핑을 Hash에 저장해 재발급과 취소를 처리합니다.
 - 예약은 `HELD -> CONFIRMED` 또는 `HELD -> EXPIRED` 상태로 관리합니다.
 - 결제 승인은 멱등키를 저장해 같은 요청의 재처리는 기존 결제 결과를 반환하고, 다른 주문/금액 재사용은 거절합니다.
 - 결제 승인 트랜잭션에서 예약, 주문, 좌석, 티켓을 함께 변경해 구매 완료 상태의 원자성을 보장합니다.
