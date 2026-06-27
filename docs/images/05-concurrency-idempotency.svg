@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="780" viewBox="0 0 1280 780" role="img" aria-labelledby="title desc">
+  <title id="title">Concurrency and Idempotency Design</title>
+  <desc id="desc">좌석 동시성 제어와 결제 멱등성 전략</desc>
+  <defs>
+    <style>
+      .bg{fill:#f7f8fb}.title{font:700 42px 'Segoe UI',Arial,sans-serif;fill:#172033}.sub{font:400 20px 'Segoe UI',Arial,sans-serif;fill:#526070}
+      .panel{fill:#fff;stroke:#ccd5e1;stroke-width:2}.head{font:700 26px 'Segoe UI',Arial,sans-serif;fill:#172033}.text{font:400 18px 'Segoe UI',Arial,sans-serif;fill:#344054}.mono{font:600 17px Consolas,monospace;fill:#263445}
+      .ok{fill:#eaf5ef;stroke:#6ab386;stroke-width:2}.warn{fill:#fff7e8;stroke:#e2b660;stroke-width:2}.bad{fill:#fff0f0;stroke:#df7f7f;stroke-width:2}.arrow{stroke:#344054;stroke-width:3;fill:none;marker-end:url(#arrow)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#344054"/></marker>
+  </defs>
+  <rect class="bg" width="1280" height="780"/>
+  <text x="64" y="70" class="title">Concurrency &amp; Idempotency</text>
+  <text x="64" y="106" class="sub">동시 좌석 요청과 결제 재시도를 실제 서비스 장애 포인트로 보고 방어한다.</text>
+
+  <rect x="70" y="155" width="540" height="500" rx="16" class="panel"/>
+  <text x="105" y="205" class="head">Seat Hold Concurrency</text>
+  <rect x="110" y="245" width="180" height="58" rx="10" class="warn"/><text x="135" y="281" class="text">User A: A-1 요청</text>
+  <rect x="110" y="340" width="180" height="58" rx="10" class="warn"/><text x="135" y="376" class="text">User B: A-1 요청</text>
+  <rect x="365" y="292" width="185" height="72" rx="10" class="ok"/><text x="395" y="322" class="mono">SELECT ... FOR UPDATE</text><text x="405" y="348" class="text">좌석 row 잠금</text>
+  <path d="M290 274 C325 280 340 300 360 318" class="arrow"/>
+  <path d="M290 369 C325 360 340 345 360 333" class="arrow"/>
+  <rect x="132" y="455" width="380" height="115" rx="12" class="ok"/>
+  <text x="160" y="492" class="text">첫 요청: AVAILABLE -> HELD</text>
+  <text x="160" y="528" class="text">후속 요청: SEAT_NOT_AVAILABLE</text>
+  <text x="160" y="558" class="text">만료 배치가 HELD -> AVAILABLE 복구</text>
+
+  <rect x="670" y="155" width="540" height="500" rx="16" class="panel"/>
+  <text x="705" y="205" class="head">Payment Idempotency</text>
+  <rect x="720" y="250" width="430" height="64" rx="10" class="ok"/>
+  <text x="745" y="288" class="mono">Idempotency-Key: payment-request-001</text>
+  <path d="M935 314 V365" class="arrow"/>
+  <rect x="720" y="375" width="430" height="82" rx="10" class="ok"/>
+  <text x="755" y="408" class="text">같은 주문 + 같은 금액 재요청</text>
+  <text x="755" y="438" class="text">기존 Payment 반환</text>
+  <path d="M935 457 V508" class="arrow"/>
+  <rect x="720" y="518" width="430" height="82" rx="10" class="bad"/>
+  <text x="755" y="552" class="text">다른 주문 또는 다른 금액으로 재사용</text>
+  <text x="755" y="582" class="text">409 IDEMPOTENCY_KEY_REUSED</text>
+
+  <rect x="115" y="690" width="1050" height="54" rx="12" fill="#e8f1ff" stroke="#7aa7e8" stroke-width="2"/>
+  <text x="145" y="724" class="text">트랜잭션 경계: 결제 승인 시 주문, 예약, 좌석, 결제, 티켓 변경을 한 번에 커밋해 구매 완료 상태의 불일치를 줄인다.</text>
+</svg>

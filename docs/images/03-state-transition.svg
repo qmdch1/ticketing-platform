@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Domain State Transition</title>
+  <desc id="desc">좌석, 예약, 주문, 결제, 티켓의 상태 전이</desc>
+  <defs>
+    <style>
+      .bg{fill:#f7f8fb}.title{font:700 42px 'Segoe UI',Arial,sans-serif;fill:#172033}.sub{font:400 20px 'Segoe UI',Arial,sans-serif;fill:#526070}
+      .card{fill:#fff;stroke:#ccd5e1;stroke-width:2}.state{fill:#e8f1ff;stroke:#7aa7e8;stroke-width:2}.final{fill:#eaf5ef;stroke:#6ab386;stroke-width:2}.bad{fill:#fff0f0;stroke:#df7f7f;stroke-width:2}
+      .label{font:700 22px 'Segoe UI',Arial,sans-serif;fill:#172033}.text{font:500 18px 'Segoe UI',Arial,sans-serif;fill:#263445;text-anchor:middle}.small{font:400 15px 'Segoe UI',Arial,sans-serif;fill:#526070;text-anchor:middle}
+      .arrow{stroke:#344054;stroke-width:3;fill:none;marker-end:url(#arrow)}.dash{stroke:#6b7a8c;stroke-width:3;fill:none;stroke-dasharray:8 7;marker-end:url(#arrow2)}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#344054"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6b7a8c"/></marker>
+  </defs>
+  <rect class="bg" width="1280" height="760"/>
+  <text x="64" y="70" class="title">State Transition</text>
+  <text x="64" y="106" class="sub">구매 진행 단계마다 변경되는 도메인 상태와 실패/만료 경로</text>
+
+  <rect x="70" y="150" width="1140" height="120" rx="14" class="card"/>
+  <text x="100" y="195" class="label">Seat</text>
+  <rect x="260" y="178" width="160" height="56" rx="28" class="state"/><text x="340" y="213" class="text">AVAILABLE</text>
+  <rect x="550" y="178" width="160" height="56" rx="28" class="state"/><text x="630" y="213" class="text">HELD</text>
+  <rect x="840" y="178" width="160" height="56" rx="28" class="final"/><text x="920" y="213" class="text">SOLD</text>
+  <path d="M420 206 H540" class="arrow"/><text x="480" y="190" class="small">hold</text>
+  <path d="M710 206 H830" class="arrow"/><text x="770" y="190" class="small">payment approved</text>
+  <path d="M565 236 C500 285 415 285 350 238" class="dash"/><text x="456" y="292" class="small">expiration releases seat</text>
+
+  <rect x="70" y="315" width="1140" height="120" rx="14" class="card"/>
+  <text x="100" y="360" class="label">Reservation</text>
+  <rect x="310" y="343" width="160" height="56" rx="28" class="state"/><text x="390" y="378" class="text">HELD</text>
+  <rect x="620" y="343" width="180" height="56" rx="28" class="final"/><text x="710" y="378" class="text">CONFIRMED</text>
+  <rect x="910" y="343" width="160" height="56" rx="28" class="bad"/><text x="990" y="378" class="text">EXPIRED</text>
+  <path d="M470 371 H610" class="arrow"/><text x="540" y="355" class="small">payment</text>
+  <path d="M470 392 C590 465 805 465 925 392" class="dash"/><text x="700" y="474" class="small">after expiresAt</text>
+
+  <rect x="70" y="480" width="540" height="120" rx="14" class="card"/>
+  <text x="100" y="525" class="label">Order</text>
+  <rect x="230" y="508" width="210" height="56" rx="28" class="state"/><text x="335" y="543" class="text">PENDING_PAYMENT</text>
+  <rect x="480" y="508" width="100" height="56" rx="28" class="final"/><text x="530" y="543" class="text">PAID</text>
+  <path d="M440 536 H470" class="arrow"/>
+
+  <rect x="670" y="480" width="540" height="120" rx="14" class="card"/>
+  <text x="700" y="525" class="label">Payment / Ticket</text>
+  <rect x="875" y="508" width="130" height="56" rx="28" class="final"/><text x="940" y="543" class="text">APPROVED</text>
+  <rect x="1040" y="508" width="120" height="56" rx="28" class="final"/><text x="1100" y="543" class="text">ISSUED</text>
+  <path d="M1005 536 H1030" class="arrow"/>
+
+  <rect x="190" y="645" width="900" height="64" rx="12" fill="#fff7e8" stroke="#e2b660" stroke-width="2"/>
+  <text x="640" y="684" class="text">결제 승인 트랜잭션은 Reservation, Order, Seat, Payment, Ticket 상태를 함께 변경한다.</text>
+</svg>

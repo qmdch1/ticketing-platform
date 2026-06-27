@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="900" viewBox="0 0 1280 900" role="img" aria-labelledby="title desc">
+  <title id="title">Ticket Purchase Sequence</title>
+  <desc id="desc">좌석 조회, 임시 예약, 주문 생성, 결제 승인, 티켓 발급 시퀀스</desc>
+  <defs>
+    <style>
+      .bg{fill:#f7f8fb}.title{font:700 42px 'Segoe UI',Arial,sans-serif;fill:#172033}.sub{font:400 20px 'Segoe UI',Arial,sans-serif;fill:#526070}
+      .lane{fill:#fff;stroke:#ccd5e1;stroke-width:2}.head{fill:#163b6d}.headText{font:700 19px 'Segoe UI',Arial,sans-serif;fill:white;text-anchor:middle}
+      .line{stroke:#9aa8b8;stroke-width:2;stroke-dasharray:8 8}.msg{stroke:#344054;stroke-width:3;fill:none;marker-end:url(#arrow)}.return{stroke:#6b7a8c;stroke-width:2;fill:none;stroke-dasharray:7 6;marker-end:url(#arrow2)}
+      .text{font:500 17px 'Segoe UI',Arial,sans-serif;fill:#263445}.small{font:400 15px 'Segoe UI',Arial,sans-serif;fill:#526070}.note{fill:#fff7e8;stroke:#e2b660;stroke-width:2}.critical{fill:#eaf5ef;stroke:#6ab386;stroke-width:2}
+    </style>
+    <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#344054"/></marker>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#6b7a8c"/></marker>
+  </defs>
+  <rect class="bg" width="1280" height="900"/>
+  <text x="64" y="70" class="title">Purchase Sequence</text>
+  <text x="64" y="106" class="sub">고객 요청이 예약, 주문, 결제, 티켓 발급으로 확정되는 전체 흐름</text>
+
+  <g transform="translate(60 150)">
+    <rect x="0" y="0" width="190" height="56" rx="10" class="head"/><text x="95" y="36" class="headText">Customer</text>
+    <rect x="240" y="0" width="190" height="56" rx="10" class="head"/><text x="335" y="36" class="headText">Controller</text>
+    <rect x="480" y="0" width="190" height="56" rx="10" class="head"/><text x="575" y="36" class="headText">Service</text>
+    <rect x="720" y="0" width="190" height="56" rx="10" class="head"/><text x="815" y="36" class="headText">Repository</text>
+    <rect x="960" y="0" width="190" height="56" rx="10" class="head"/><text x="1055" y="36" class="headText">PostgreSQL</text>
+
+    <path d="M95 56 V700" class="line"/><path d="M335 56 V700" class="line"/><path d="M575 56 V700" class="line"/><path d="M815 56 V700" class="line"/><path d="M1055 56 V700" class="line"/>
+
+    <path d="M95 105 H335" class="msg"/><text x="112" y="96" class="text">GET seats</text>
+    <path d="M335 145 H815" class="msg"/><text x="350" y="136" class="text">find seats by performance</text>
+    <path d="M815 185 H1055" class="msg"/><text x="842" y="176" class="text">select seats</text>
+    <path d="M1055 225 H95" class="return"/><text x="380" y="216" class="small">좌석 상태 반환</text>
+
+    <path d="M95 290 H335" class="msg"/><text x="112" y="281" class="text">POST reservation</text>
+    <path d="M335 330 H575" class="msg"/><text x="350" y="321" class="text">hold(performanceId, seatIds)</text>
+    <path d="M575 370 H815" class="msg"/><text x="590" y="361" class="text">findAllForUpdate</text>
+    <path d="M815 410 H1055" class="msg"/><text x="835" y="401" class="text">PESSIMISTIC_WRITE</text>
+    <rect x="500" y="428" width="420" height="68" rx="10" class="critical"/>
+    <text x="525" y="457" class="text">Seat AVAILABLE -> HELD</text>
+    <text x="525" y="484" class="small">Reservation HELD, expiresAt = now + 5m</text>
+    <path d="M575 520 H95" class="return"/><text x="225" y="511" class="small">reservationId 반환</text>
+
+    <path d="M95 585 H335" class="msg"/><text x="112" y="576" class="text">POST order</text>
+    <path d="M335 625 H575" class="msg"/><text x="350" y="616" class="text">create(reservationId)</text>
+    <path d="M575 665 H1055" class="msg"/><text x="590" y="656" class="text">예약 소유자/만료 검증, 금액 계산</text>
+    <path d="M1055 705 H95" class="return"/><text x="415" y="696" class="small">PENDING_PAYMENT 주문 반환</text>
+  </g>
+
+  <rect x="80" y="800" width="1120" height="58" rx="12" class="note"/>
+  <text x="110" y="836" class="text">결제 승인 단계: 멱등키 확인 -> 주문/예약 잠금 -> 금액 검증 -> 예약 CONFIRMED, 주문 PAID, 좌석 SOLD, 티켓 발급을 하나의 트랜잭션으로 커밋</text>
+</svg>
