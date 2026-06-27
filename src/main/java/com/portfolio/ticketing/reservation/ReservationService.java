@@ -10,6 +10,7 @@ import java.util.UUID;
 import com.portfolio.ticketing.common.BusinessException;
 import com.portfolio.ticketing.performance.PerformanceRepository;
 import com.portfolio.ticketing.seat.Seat;
+import com.portfolio.ticketing.seat.SeatCacheService;
 import com.portfolio.ticketing.seat.SeatRepository;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
@@ -22,6 +23,7 @@ public class ReservationService {
 	private final ReservationRepository reservationRepository;
 	private final PerformanceRepository performanceRepository;
 	private final SeatRepository seatRepository;
+	private final SeatCacheService seatCacheService;
 	private final Clock clock;
 	private final Duration holdDuration;
 
@@ -29,11 +31,13 @@ public class ReservationService {
 			ReservationRepository reservationRepository,
 			PerformanceRepository performanceRepository,
 			SeatRepository seatRepository,
+			SeatCacheService seatCacheService,
 			Clock clock,
 			@Value("${ticketing.reservation.hold-duration}") Duration holdDuration) {
 		this.reservationRepository = reservationRepository;
 		this.performanceRepository = performanceRepository;
 		this.seatRepository = seatRepository;
+		this.seatCacheService = seatCacheService;
 		this.clock = clock;
 		this.holdDuration = holdDuration;
 	}
@@ -58,6 +62,7 @@ public class ReservationService {
 		Reservation reservation = Reservation.hold(
 				reservationId, performanceId, customerId, seatIds, now, now.plus(holdDuration));
 		seats.forEach(seat -> seat.hold(reservationId));
+		seatCacheService.evict(performanceId);
 		return reservationRepository.save(reservation);
 	}
 
@@ -77,6 +82,7 @@ public class ReservationService {
 			seatRepository.findAllByReservationIdForUpdate(reservation.getId())
 					.forEach(seat -> seat.release(reservation.getId()));
 			reservation.expire(now);
+			seatCacheService.evict(reservation.getPerformanceId());
 		});
 		return expired.size();
 	}

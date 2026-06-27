@@ -11,8 +11,11 @@ import com.portfolio.ticketing.order.TicketOrderRepository;
 import com.portfolio.ticketing.reservation.Reservation;
 import com.portfolio.ticketing.reservation.ReservationRepository;
 import com.portfolio.ticketing.seat.Seat;
+import com.portfolio.ticketing.seat.SeatCacheService;
 import com.portfolio.ticketing.seat.SeatRepository;
 import com.portfolio.ticketing.ticket.Ticket;
+import com.portfolio.ticketing.ticket.TicketEventPublisher;
+import com.portfolio.ticketing.ticket.TicketIssuedEvent;
 import com.portfolio.ticketing.ticket.TicketRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -25,7 +28,9 @@ public class PaymentService {
 	private final TicketOrderRepository orderRepository;
 	private final ReservationRepository reservationRepository;
 	private final SeatRepository seatRepository;
+	private final SeatCacheService seatCacheService;
 	private final TicketRepository ticketRepository;
+	private final TicketEventPublisher ticketEventPublisher;
 	private final Clock clock;
 
 	public PaymentService(
@@ -33,13 +38,17 @@ public class PaymentService {
 			TicketOrderRepository orderRepository,
 			ReservationRepository reservationRepository,
 			SeatRepository seatRepository,
+			SeatCacheService seatCacheService,
 			TicketRepository ticketRepository,
+			TicketEventPublisher ticketEventPublisher,
 			Clock clock) {
 		this.paymentRepository = paymentRepository;
 		this.orderRepository = orderRepository;
 		this.reservationRepository = reservationRepository;
 		this.seatRepository = seatRepository;
+		this.seatCacheService = seatCacheService;
 		this.ticketRepository = ticketRepository;
+		this.ticketEventPublisher = ticketEventPublisher;
 		this.clock = clock;
 	}
 
@@ -67,8 +76,10 @@ public class PaymentService {
 		List<Seat> seats = seatRepository.findAllByReservationIdForUpdate(reservation.getId());
 		seats.forEach(seat -> {
 			seat.sell(reservation.getId());
-			ticketRepository.save(Ticket.issue(order.getId(), reservation.getPerformanceId(), seat.getId(), now));
+			Ticket ticket = ticketRepository.save(Ticket.issue(order.getId(), reservation.getPerformanceId(), seat.getId(), now));
+			ticketEventPublisher.publishAfterCommit(TicketIssuedEvent.from(ticket));
 		});
+		seatCacheService.evict(reservation.getPerformanceId());
 		return paymentRepository.save(Payment.approved(orderId, idempotencyKey, amount, now));
 	}
 

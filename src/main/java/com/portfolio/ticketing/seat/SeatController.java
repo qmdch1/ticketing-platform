@@ -12,22 +12,14 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/v1/performances/{performanceId}/seats")
 public class SeatController {
 
-	private final SeatRepository seatRepository;
+	private final SeatService seatService;
 
-	public SeatController(SeatRepository seatRepository) {
-		this.seatRepository = seatRepository;
+	public SeatController(SeatService seatService) {
+		this.seatService = seatService;
 	}
 
 	@GetMapping
-	List<SeatResponse> seats(@PathVariable UUID performanceId) {
-		return seatRepository.findByPerformanceIdOrderBySectionAscSeatNumberAsc(performanceId).stream()
-				.map(SeatResponse::from)
-				.toList();
-	}
-
-	record SeatResponse(UUID id, String section, String seatNumber, long price, SeatStatus status) {
-		static SeatResponse from(Seat seat) {
-			return new SeatResponse(seat.getId(), seat.getSection(), seat.getSeatNumber(), seat.getPrice(), seat.getStatus());
-		}
+	List<SeatView> seats(@PathVariable UUID performanceId) {
+		return seatService.findByPerformance(performanceId);
 	}
 }

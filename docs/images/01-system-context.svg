@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" role="img" aria-labelledby="title desc">
   <title id="title">Ticketing Platform System Context</title>
-  <desc id="desc">티켓팅 플랫폼의 외부 사용자, API, 애플리케이션, 데이터베이스, 운영 엔드포인트 구조</desc>
+  <desc id="desc">티켓팅 플랫폼의 외부 사용자, API, 애플리케이션, PostgreSQL, Redis, Kafka, 운영 엔드포인트 구조</desc>
   <defs>
     <style>
       .bg{fill:#f7f8fb}.title{font:700 42px 'Segoe UI',Arial,sans-serif;fill:#172033}.sub{font:400 20px 'Segoe UI',Arial,sans-serif;fill:#526070}
@@ -24,26 +24,29 @@
   <text x="490" y="222" class="labelWhite">Ticketing Platform API</text>
   <text x="450" y="270" class="labelWhite">Spring MVC + JPA</text>
   <text x="450" y="312" class="text" fill="#dbe8ff">ReservationService: 좌석 홀드와 만료</text>
-  <text x="450" y="344" class="text" fill="#dbe8ff">OrderService: 예약 기반 주문 생성</text>
-  <text x="450" y="376" class="text" fill="#dbe8ff">PaymentService: 멱등 결제와 티켓 발급</text>
+  <text x="450" y="344" class="text" fill="#dbe8ff">WaitingQueueService: Redis 대기열 토큰</text>
+  <text x="450" y="376" class="text" fill="#dbe8ff">PaymentService: 결제, 티켓 발급, Kafka 이벤트</text>
 
-  <rect x="990" y="160" width="220" height="170" rx="12" class="box"/>
-  <text x="1042" y="215" class="label">PostgreSQL</text>
-  <text x="1025" y="252" class="text">좌석/예약/주문</text>
-  <text x="1025" y="282" class="text">결제/티켓 저장</text>
-  <text x="1025" y="312" class="text">Flyway 스키마</text>
+  <rect x="990" y="145" width="220" height="130" rx="12" class="box"/>
+  <text x="1042" y="195" class="label">PostgreSQL</text>
+  <text x="1025" y="232" class="text">구매 도메인 저장</text>
+  <text x="1025" y="262" class="text">Flyway 스키마</text>
 
-  <rect x="990" y="410" width="220" height="130" rx="12" class="accent"/>
-  <text x="1053" y="458" class="label">Ops</text>
-  <text x="1025" y="492" class="mono">/actuator/health</text>
-  <text x="1025" y="522" class="mono">/actuator/prometheus</text>
+  <rect x="990" y="315" width="220" height="110" rx="12" class="accent"/>
+  <text x="1062" y="358" class="label">Redis</text>
+  <text x="1025" y="392" class="text">좌석 캐시 / 대기열</text>
+
+  <rect x="990" y="465" width="220" height="110" rx="12" class="accent"/>
+  <text x="1062" y="508" class="label">Kafka</text>
+  <text x="1025" y="542" class="text">티켓 발급 이벤트</text>
 
   <rect x="405" y="500" width="470" height="100" rx="12" class="note"/>
   <text x="438" y="542" class="label">핵심 품질 속성</text>
   <text x="438" y="575" class="text">동시성 제어, 멱등성, 트랜잭션 원자성, 운영 관측성</text>
 
   <path d="M290 285 H380" class="arrow"/>
-  <path d="M890 260 H980" class="arrow"/>
-  <path d="M890 405 C930 440 945 468 980 475" class="arrow"/>
+  <path d="M890 235 H980" class="arrow"/>
+  <path d="M890 360 H980" class="arrow"/>
+  <path d="M890 405 C930 440 945 500 980 520" class="arrow"/>
   <path d="M640 420 V490" class="arrow"/>
 </svg>

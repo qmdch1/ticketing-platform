@@ -10,27 +10,27 @@
   </defs>
   <rect class="bg" width="1280" height="760"/>
   <text x="64" y="70" class="title">Operations &amp; Roadmap</text>
-  <text x="64" y="106" class="sub">현재 구현된 운영 요소와 실제 서비스로 확장할 때의 다음 단계</text>
+  <text x="64" y="106" class="sub">Redis와 Kafka를 포함해 현재 구현된 운영 요소와 다음 확장 단계</text>
 
   <rect x="70" y="155" width="350" height="500" rx="16" class="col"/>
   <text x="110" y="205" class="head">Now</text>
   <rect x="110" y="245" width="270" height="70" rx="10" class="item"/><text x="135" y="274" class="mono">Flyway</text><text x="135" y="300" class="small">DDL 버전 관리</text>
   <rect x="110" y="340" width="270" height="70" rx="10" class="item"/><text x="135" y="369" class="mono">Actuator</text><text x="135" y="395" class="small">health, info, metrics</text>
-  <rect x="110" y="435" width="270" height="70" rx="10" class="item"/><text x="135" y="464" class="mono">Prometheus endpoint</text><text x="135" y="490" class="small">운영 메트릭 노출</text>
-  <rect x="110" y="530" width="270" height="70" rx="10" class="item"/><text x="135" y="559" class="mono">Testcontainers</text><text x="135" y="585" class="small">DB 통합 테스트 기반</text>
+  <rect x="110" y="435" width="270" height="70" rx="10" class="item"/><text x="135" y="464" class="mono">Redis</text><text x="135" y="490" class="small">좌석 캐시와 대기열</text>
+  <rect x="110" y="530" width="270" height="70" rx="10" class="item"/><text x="135" y="559" class="mono">Kafka</text><text x="135" y="585" class="small">티켓 발급 이벤트</text>
 
   <rect x="465" y="155" width="350" height="500" rx="16" class="col"/>
   <text x="505" y="205" class="head">Next</text>
-  <rect x="505" y="245" width="270" height="70" rx="10" class="next"/><text x="530" y="274" class="text">Redis 대기열</text><text x="530" y="300" class="small">오픈런 트래픽 흡수</text>
-  <rect x="505" y="340" width="270" height="70" rx="10" class="next"/><text x="530" y="369" class="text">좌석 조회 캐시</text><text x="530" y="395" class="small">읽기 부하 절감</text>
+  <rect x="505" y="245" width="270" height="70" rx="10" class="next"/><text x="530" y="274" class="text">대기열 진입 제어</text><text x="530" y="300" class="small">토큰 검증과 입장 허용</text>
+  <rect x="505" y="340" width="270" height="70" rx="10" class="next"/><text x="530" y="369" class="text">캐시 워밍</text><text x="530" y="395" class="small">공연 오픈 전 사전 적재</text>
   <rect x="505" y="435" width="270" height="70" rx="10" class="next"/><text x="530" y="464" class="text">PG 승인 분리</text><text x="530" y="490" class="small">외부 장애 격리</text>
-  <rect x="505" y="530" width="270" height="70" rx="10" class="next"/><text x="530" y="559" class="text">Outbox + Kafka</text><text x="530" y="585" class="small">티켓 발급 이벤트화</text>
+  <rect x="505" y="530" width="270" height="70" rx="10" class="next"/><text x="530" y="559" class="text">Transactional Outbox</text><text x="530" y="585" class="small">이벤트 유실 방지</text>
 
   <rect x="860" y="155" width="350" height="500" rx="16" class="col"/>
   <text x="900" y="205" class="head">Portfolio Story</text>
   <rect x="900" y="245" width="270" height="90" rx="10" class="item"/><text x="925" y="279" class="text">문제 정의</text><text x="925" y="307" class="small">중복 판매와 결제 재시도</text>
-  <rect x="900" y="365" width="270" height="90" rx="10" class="item"/><text x="925" y="399" class="text">현재 해결</text><text x="925" y="427" class="small">락, 멱등키, 트랜잭션</text>
-  <rect x="900" y="485" width="270" height="90" rx="10" class="item"/><text x="925" y="519" class="text">확장 방향</text><text x="925" y="547" class="small">큐, 캐시, 이벤트, 관측성</text>
+  <rect x="900" y="365" width="270" height="90" rx="10" class="item"/><text x="925" y="399" class="text">현재 해결</text><text x="925" y="427" class="small">락, 멱등키, Redis, Kafka</text>
+  <rect x="900" y="485" width="270" height="90" rx="10" class="item"/><text x="925" y="519" class="text">확장 방향</text><text x="925" y="547" class="small">Outbox, PG 분리, 관측성</text>
 
   <text x="105" y="700" class="small">이 문서는 현재 코드 기준의 구현 사실과 다음 확장 계획을 분리해 면접에서 설명 가능한 구조로 정리한다.</text>
 </svg>

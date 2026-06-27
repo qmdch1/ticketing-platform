@@ -5,6 +5,10 @@ spring:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/ticketing}
     username: ${DB_USERNAME:ticketing}
     password: ${DB_PASSWORD:ticketing}
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
   jpa:
     open-in-view: false
     hibernate:
@@ -15,6 +19,15 @@ spring:
           time_zone: UTC
   flyway:
     enabled: true
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+    admin:
+      fail-fast: false
 
 management:
   endpoints:
@@ -25,3 +38,7 @@ management:
 ticketing:
   reservation:
     hold-duration: 5m
+  seat-cache:
+    ttl: 10s
+  kafka:
+    ticket-issued-topic: ticket-issued-events
