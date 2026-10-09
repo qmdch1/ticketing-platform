@@ -140,7 +140,7 @@ class SVG:
 
 
 def traffic():
-    s = SVG('티켓 구매 흐름', '', '', 16)
+    s = SVG('티켓 구매 흐름', '', '', 26)
     incoming = 'M330 361 C402 361 431 361 515 361'
     returning = 'M515 414 C435 414 416 414 330 414'
     redis = 'M805 345 C930 345 928 252 1120 252'
@@ -152,7 +152,98 @@ def traffic():
         s.route(path)
     s.add('<ellipse cx="660" cy="405" rx="250" ry="228" fill="url(#halo)"/>')
     s.circle(660, 405, 183, stroke='#284c6c', extra='stroke-opacity=".5"')
-    s.add('<g><animateTransform attributeName="transform" type="rotate" from="0 660 405" to="360 660 405" dur="24s" repeatCount="indefinite"/><circle cx="660" cy="405" r="183" fill="none" stroke="#62d4ff" stroke-opacity=".65" stroke-width="2" stroke-dasharray="28 260"/></g>')
+    stages = [
+        ('캐시 조회', '', 0, 6, BLUE),
+        ('대기 순번', '', 6, 12, PURPLE),
+        ('예약 · 주문', '', 12, 18, GOLD),
+        ('결제 확정', '', 18, 26, MINT),
+    ]
+    # Each request is one connected motion path, including the hidden portions
+    # inside nodes. Holds at node centers show processing without a new packet.
+    user, server = (210, 383), (660, 405)
+    incoming_curves = [((275, 383), (280, 361), (330, 361)),
+                       ((402, 361), (431, 361), (515, 361)),
+                       ((580, 361), (600, 405), server)]
+    response_curves = [((600, 405), (600, 414), (515, 414)),
+                       ((435, 414), (416, 414), (330, 414)),
+                       ((280, 414), (260, 383), user)]
+    redis_curves = [((730, 405), (730, 345), (805, 345)),
+                    ((930, 345), (928, 252), (1120, 252)),
+                    ((1140, 252), (1160, 260), (1160, 269))]
+    redis_back_curves = [((1140, 275), (1120, 287), (1120, 287)),
+                         ((950, 287), (960, 395), (805, 395)),
+                         ((730, 395), (730, 405), server)]
+    db_curves = [((730, 405), (730, 416), (805, 416)),
+                 ((930, 416), (963, 433), (1120, 433)),
+                 ((1140, 433), (1160, 442), (1160, 450))]
+    db_back_curves = [((1140, 456), (1120, 470), (1120, 470)),
+                      ((981, 470), (943, 458), (805, 458)),
+                      ((730, 458), (730, 405), server)]
+    event_curves = [((730, 405), (730, 488), (805, 488)),
+                    ((939, 488), (926, 614), (1120, 614)),
+                    ((1140, 614), (1160, 625), (1160, 634))]
+
+    def signal(origin, legs, color, kind='request'):
+        path = f'M{origin[0]} {origin[1]}'
+        position, distance = origin, 0
+        stops = [(0, 0)]
+        for start, end, curves in legs:
+            assert start < end
+            stops.append((start, distance))
+            for control1, control2, target in curves:
+                path += ' C' + ' '.join(str(v) for point in (control1, control2, target) for v in point)
+                previous = position
+                # Numerical arc length aligns motion stops with node centers.
+                for step in range(1, 101):
+                    t = step / 100
+                    point = tuple((1 - t) ** 3 * position[j]
+                                  + 3 * (1 - t) ** 2 * t * control1[j]
+                                  + 3 * (1 - t) * t ** 2 * control2[j]
+                                  + t ** 3 * target[j] for j in range(2))
+                    distance += sum((point[j] - previous[j]) ** 2 for j in range(2)) ** .5
+                    previous = point
+                position = target
+            stops.append((end, distance))
+        stops.append((s.duration, distance))
+        assert all(a[0] < b[0] for a, b in zip(stops, stops[1:]))
+        times = ';'.join(f'{time / s.duration:.7f}' for time, _ in stops)
+        points = ';'.join(f'{length / distance:.7f}' for _, length in stops)
+        splines = ';'.join('.32 0 .68 1' if a[1] < b[1] else '0 0 1 1'
+                           for a, b in zip(stops, stops[1:]))
+        c = COLORS[color]
+        s.add(f'''<g class="packet" data-flow="{kind}" data-start="{legs[0][0]}" data-end="{legs[-1][1]}" data-origin="{origin[0]},{origin[1]}" opacity="0">
+<animateMotion path="{path}" dur="{s.duration}s" repeatCount="indefinite" rotate="auto" keyPoints="{points}" keyTimes="{times}" calcMode="spline" keySplines="{splines}"/>
+{s.window(legs[0][0], legs[-1][1], .13)}
+<path d="M-38-2.5 Q-16-5 -3-3 L-3 3 Q-16 5-38 2.5Z" fill="url(#tail-{color})"/>
+<ellipse rx="9" ry="6" fill="{c}" opacity=".45" filter="url(#glow)"/>
+<circle r="4.2" fill="{c}"/><circle cx="1" cy="-1" r="1.5" fill="#fff" opacity=".9"/>
+</g>''')
+
+    for phase, (_, _, start, end, color) in enumerate(stages):
+        cname = ('blue', 'purple', 'gold', 'mint')[phase]
+        target, reply = (redis, redis_return) if phase < 2 else (database, database_return)
+        out_curves, back_curves = (redis_curves, redis_back_curves) if phase < 2 else (db_curves, db_back_curves)
+        legs = [(start + .35, start + 1.55, incoming_curves),
+                (start + 1.95, start + 3.0, out_curves),
+                (start + 3.45, start + 4.6, back_curves)]
+        if phase < 3:
+            legs.append((start + 4.95, start + 5.75, response_curves))
+        for route, a, b in ((incoming, *legs[0][:2]), (target, *legs[1][:2]), (reply, *legs[2][:2])):
+            s.route(route, color, a, b)
+        if phase < 3:
+            s.route(returning, color, *legs[3][:2])
+        signal(user, legs, cname)
+
+    # After the committed payment returns to the server, the only fan-out is
+    # response + event. Both signals start at the exact same place and time.
+    fork_start, fork_end = 23.05, 25.5
+    for curves, path, kind in ((response_curves, returning, 'response'),
+                              (event_curves, kafka, 'event')):
+        s.route(path, MINT, fork_start, fork_end)
+        signal(server, [(fork_start, fork_end, curves)], 'mint', kind)
+
+    # Opaque node cards cover the internal motion, leaving one visible signal
+    # on the connecting routes until the explicit post-commit fan-out.
     s.node(90, 288, 240, 190, 'users', '사용자', '', BLUE, '')
     s.rect(515, 260, 290, 300, extra='filter="url(#shadow)"')
     s.rect(607, 287, 106, 100, fill='#10243a', stroke='#3b6487', radius=26)
@@ -161,39 +252,13 @@ def traffic():
     s.node(1120, 196, 370, 145, 'redis', 'Redis', '', PURPLE, '조회 캐시 · 대기 순번')
     s.node(1120, 379, 370, 145, 'database', 'PostgreSQL', '', GOLD, '예약 · 결제 저장')
     s.node(1120, 562, 370, 145, 'kafka', 'Kafka', '', MINT, '구매 완료 이벤트')
-    stages = [
-        ('캐시 조회', '', 0, 4, BLUE),
-        ('대기 순번', '', 4, 8, PURPLE),
-        ('예약 · 주문', '', 8, 12, GOLD),
-        ('결제 확정', '', 12, 16, MINT),
-    ]
     for phase, (_, _, start, end, color) in enumerate(stages):
-        cname = ('blue', 'purple', 'gold', 'mint')[phase]
-        s.route(incoming, color, start, end)
-        s.route(returning, MINT, start, end)
-        action = ('캐시로 빠른 조회', '순번 토큰 발급', '좌석 잠금 후 예약', '구매 확정 후 발행')[phase]
-        s.group(s.fragment(lambda: s.text(660, 505, action, 23, color, anchor='middle')), start, end)
-        for i in range(3):
-            a = start + .18 + i * .92
-            s.packet(incoming, a, a + .85, cname)
-            s.packet(returning, a + 1.05, min(a + 1.95, end - .04), 'mint')
-        target = redis if phase < 2 else database
-        reply = redis_return if phase < 2 else database_return
-        s.route(target, color, start, end)
-        s.route(reply, color, start, end)
-        for i in range(2):
-            a = start + .72 + i * 1.22
-            s.packet(target, a, a + .82, cname)
-            s.packet(reply, a + .95, a + 1.66, cname)
-        if phase == 2:
-            s.route(redis, GOLD, 10.5, 12)
-            s.packet(redis, 10.65, 11.65, 'gold')
-        if phase == 3:
-            s.route(kafka, MINT, 14.2, 16)
-            s.packet(kafka, 14.32, 15.45, 'mint', 1.2)
-            s.pulse(1160, 625, MINT, 15.1, 15.95, 34)
+        action = ('캐시 조회 후 응답', '순번 발급 후 응답', '예약 저장 후 응답', '결제 확정')[phase]
+        s.group(s.fragment(lambda: s.text(660, 505, action, 23, color, anchor='middle')),
+                start, 22.8 if phase == 3 else end)
+    s.group(s.fragment(lambda: s.text(660, 505, '응답 · 이벤트 발행', 23, MINT, anchor='middle')), 22.8, 26)
     s.timeline(stages)
-    s.finish('01-request-traffic.svg', '조회는 캐시로, 예약과 결제는 트랜잭션으로 처리합니다. 구매 확정 후 이벤트를 발행합니다. 대기 순번은 토큰 관리 기능입니다.')
+    s.finish('01-request-traffic.svg', '캐시 조회, 대기 순번, 예약과 결제 요청은 각각 하나의 신호로 순서대로 이동합니다. 결제 확정 후에만 예매 서버 한곳에서 구매 응답과 완료 이벤트가 갈라집니다. 대기 순번은 토큰 관리 기능입니다.')
 
 
 def concurrency():
