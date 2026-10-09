@@ -140,7 +140,7 @@ class SVG:
 
 
 def traffic():
-    s = SVG('티켓 구매 흐름', '', '', 26)
+    s = SVG('티켓 구매 흐름', '', '', 16.5)
     incoming = 'M330 361 C402 361 431 361 515 361'
     returning = 'M515 414 C435 414 416 414 330 414'
     redis = 'M805 345 C930 345 928 252 1120 252'
@@ -153,13 +153,14 @@ def traffic():
     s.add('<ellipse cx="660" cy="405" rx="250" ry="228" fill="url(#halo)"/>')
     s.circle(660, 405, 183, stroke='#284c6c', extra='stroke-opacity=".5"')
     stages = [
-        ('캐시 조회', '', 0, 6, BLUE),
-        ('대기 순번', '', 6, 12, PURPLE),
-        ('예약 · 주문', '', 12, 18, GOLD),
-        ('결제 확정', '', 18, 26, MINT),
+        ('캐시 조회', '', 0, 4, BLUE),
+        ('대기 순번', '', 4, 8, PURPLE),
+        ('예약 · 주문', '', 8, 12, GOLD),
+        ('결제 확정', '', 12, 16.5, MINT),
     ]
-    # Each request is one connected motion path, including the hidden portions
-    # inside nodes. Holds at node centers show processing without a new packet.
+    # Keep one connected signal, but cross hidden node interiors in less than
+    # one display frame. Only the visible connecting routes take travel time.
+    transfer = .004
     user, server = (210, 383), (660, 405)
     incoming_curves = [((275, 383), (280, 361), (330, 361)),
                        ((402, 361), (431, 361), (515, 361)),
@@ -188,9 +189,10 @@ def traffic():
         position, distance = origin, 0
         stops = [(0, 0)]
         for start, end, curves in legs:
-            assert start < end
-            stops.append((start, distance))
-            for control1, control2, target in curves:
+            assert end - start > 2 * transfer and len(curves) == 3
+            if stops[-1][0] != start:
+                stops.append((start, distance))
+            for index, (control1, control2, target) in enumerate(curves):
                 path += ' C' + ' '.join(str(v) for point in (control1, control2, target) for v in point)
                 previous = position
                 # Numerical arc length aligns motion stops with node centers.
@@ -203,17 +205,16 @@ def traffic():
                     distance += sum((point[j] - previous[j]) ** 2 for j in range(2)) ** .5
                     previous = point
                 position = target
-            stops.append((end, distance))
+                curve_end = start + transfer if index == 0 else end - transfer if index == 1 else end
+                stops.append((curve_end, distance))
         stops.append((s.duration, distance))
         assert all(a[0] < b[0] for a, b in zip(stops, stops[1:]))
         times = ';'.join(f'{time / s.duration:.7f}' for time, _ in stops)
         points = ';'.join(f'{length / distance:.7f}' for _, length in stops)
-        splines = ';'.join('.32 0 .68 1' if a[1] < b[1] else '0 0 1 1'
-                           for a, b in zip(stops, stops[1:]))
         c = COLORS[color]
         s.add(f'''<g class="packet" data-flow="{kind}" data-start="{legs[0][0]}" data-end="{legs[-1][1]}" data-origin="{origin[0]},{origin[1]}" opacity="0">
-<animateMotion path="{path}" dur="{s.duration}s" repeatCount="indefinite" rotate="auto" keyPoints="{points}" keyTimes="{times}" calcMode="spline" keySplines="{splines}"/>
-{s.window(legs[0][0], legs[-1][1], .13)}
+<animateMotion path="{path}" dur="{s.duration}s" repeatCount="indefinite" rotate="auto" keyPoints="{points}" keyTimes="{times}" calcMode="linear"/>
+{s.window(legs[0][0], legs[-1][1], transfer)}
 <path d="M-38-2.5 Q-16-5 -3-3 L-3 3 Q-16 5-38 2.5Z" fill="url(#tail-{color})"/>
 <ellipse rx="9" ry="6" fill="{c}" opacity=".45" filter="url(#glow)"/>
 <circle r="4.2" fill="{c}"/><circle cx="1" cy="-1" r="1.5" fill="#fff" opacity=".9"/>
@@ -223,22 +224,27 @@ def traffic():
         cname = ('blue', 'purple', 'gold', 'mint')[phase]
         target, reply = (redis, redis_return) if phase < 2 else (database, database_return)
         out_curves, back_curves = (redis_curves, redis_back_curves) if phase < 2 else (db_curves, db_back_curves)
-        legs = [(start + .35, start + 1.55, incoming_curves),
-                (start + 1.95, start + 3.0, out_curves),
-                (start + 3.45, start + 4.6, back_curves)]
+        steps = [(.7, incoming_curves), (1.05, out_curves), (1.05, back_curves)]
         if phase < 3:
-            legs.append((start + 4.95, start + 5.75, response_curves))
+            steps.append((.7, response_curves))
+        legs, time = [], start + .16
+        for travel, curves in steps:
+            arrival = time + travel + 2 * transfer
+            legs.append((time, arrival, curves))
+            time = arrival
         for route, a, b in ((incoming, *legs[0][:2]), (target, *legs[1][:2]), (reply, *legs[2][:2])):
             s.route(route, color, a, b)
         if phase < 3:
             s.route(returning, color, *legs[3][:2])
         signal(user, legs, cname)
+        if phase == 3:
+            fork_start = time
 
     # After the committed payment returns to the server, the only fan-out is
     # response + event. Both signals start at the exact same place and time.
-    fork_start, fork_end = 23.05, 25.5
-    for curves, path, kind in ((response_curves, returning, 'response'),
-                              (event_curves, kafka, 'event')):
+    for curves, path, kind, travel in ((response_curves, returning, 'response', .7),
+                                      (event_curves, kafka, 'event', 1.15)):
+        fork_end = fork_start + travel + 2 * transfer
         s.route(path, MINT, fork_start, fork_end)
         signal(server, [(fork_start, fork_end, curves)], 'mint', kind)
 
@@ -255,8 +261,8 @@ def traffic():
     for phase, (_, _, start, end, color) in enumerate(stages):
         action = ('캐시 조회 후 응답', '순번 발급 후 응답', '예약 저장 후 응답', '결제 확정')[phase]
         s.group(s.fragment(lambda: s.text(660, 505, action, 23, color, anchor='middle')),
-                start, 22.8 if phase == 3 else end)
-    s.group(s.fragment(lambda: s.text(660, 505, '응답 · 이벤트 발행', 23, MINT, anchor='middle')), 22.8, 26)
+                start, fork_start if phase == 3 else end)
+    s.group(s.fragment(lambda: s.text(660, 505, '응답 · 이벤트 발행', 23, MINT, anchor='middle')), fork_start, s.duration)
     s.timeline(stages)
     s.finish('01-request-traffic.svg', '캐시 조회, 대기 순번, 예약과 결제 요청은 각각 하나의 신호로 순서대로 이동합니다. 결제 확정 후에만 예매 서버 한곳에서 구매 응답과 완료 이벤트가 갈라집니다. 대기 순번은 토큰 관리 기능입니다.')
 
