@@ -44,20 +44,14 @@ class SVG:
         self.add('<rect x="1" y="1" width="1598" height="858" rx="25" fill="none" stroke="#30465f" stroke-opacity=".6"/>')
         self.add('<ellipse cx="740" cy="410" rx="780" ry="420" fill="url(#atmosphere)"/>')
         self.add('<rect x="32" y="140" width="1536" height="560" fill="url(#grid)"/>')
-        self.text(58, 43, 'T I C K E T I N G   /   E N G I N E E R I N G', 15, MUTED, weight=600)
         self.text(58, 104, title, 45, weight=650)
-        self.text(60, 142, subtitle, 21, MUTED)
-        self.rect(1265, 60, 275, 43, fill='#101d2e', stroke='#304b67', radius=22)
-        self.circle(1289, 81, 4, MINT)
-        self.text(1310, 87, tag, 16, MUTED, mono=True)
-        self.text(60, 825, 'REQUESTS  /  RESPONSES  /  STATE', 15, MUTED, mono=True)
-        self.text(1540, 825, 'ILLUSTRATIVE · CONTINUOUS LOOP', 15, MUTED, anchor='end', mono=True)
 
     def add(self, markup):
         self.parts.append(markup)
 
     def text(self, x, y, text, size=20, color=TEXT, weight=400, anchor='start', mono=False):
-        family = 'Consolas,DejaVu Sans Mono,monospace' if mono else 'Segoe UI,Arial,sans-serif'
+        family = ('Consolas,Malgun Gothic,monospace' if mono
+                  else 'Malgun Gothic,Apple SD Gothic Neo,Noto Sans KR,Segoe UI,sans-serif')
         self.add(f'<text x="{x}" y="{y}" fill="{color}" font-family="{family}" font-size="{size}" font-weight="{weight}" text-anchor="{anchor}">{escape(text)}</text>')
 
     def rect(self, x, y, w, h, fill='url(#glass)', stroke='url(#edge)', radius=22, extra=''):
@@ -118,18 +112,17 @@ class SVG:
         self.rect(x, y, w, h, extra='filter="url(#shadow)"')
         self.rect(x + 18, y + 20, 62, 62, fill='#0c192a', stroke='#30445a', radius=18)
         self.icon(icon, x + 27, y + 29, 44, color)
-        self.text(x + 96, y + 45, label, 16 if w < 300 else 17, color, weight=600)
-        self.text(x + 96, y + 76, title, 26, weight=600)
-        self.text(x + 24, y + h - 23, subtitle, 19 if w < 300 else 20, MUTED)
+        self.text(x + 96, y + 65, title, 30, weight=600)
+        if label:
+            self.text(x + 24, y + h - 26, label, 22, MUTED)
 
     def timeline(self, stages):
         w = 1480 / len(stages)
         for i, (title, detail, start, end, color) in enumerate(stages):
             x = 60 + i * w
             self.add(f'<path d="M{x} 734h{w - 20}" stroke="#293c53" stroke-width="2"/>')
-            self.text(x, 769, f'0{i + 1}  {title}', 20, MUTED, weight=600)
-            self.group(self.fragment(lambda: self.text(x, 769, f'0{i + 1}  {title}', 20, color, weight=600)), start, end)
-            self.text(x, 795, detail, 18, MUTED)
+            self.text(x, 774, title, 24, MUTED, weight=600)
+            self.group(self.fragment(lambda: self.text(x, 774, title, 24, color, weight=600)), start, end)
             self.group(f'<path d="M{x} 734h{w - 20}" stroke="{color}" stroke-width="3" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1">'
                        + self.animate('stroke-dashoffset', [(0, 1), (start, 1), (end, 0), (self.duration, 0)]) + '</path>', start, end)
 
@@ -142,12 +135,12 @@ class SVG:
         root = ET.fromstring(markup)
         for el in root.iter():
             assert not el.tag.endswith(('script', 'foreignObject', 'image'))
-        (OUT / filename).write_text(markup, encoding='utf-8')
+        (OUT / filename).write_text(markup, encoding='utf-8', newline='\n')
         print(f'{filename}: {len(markup.encode()) / 1024:.1f} KiB, native vector motion, {self.duration}s loop')
 
 
 def traffic():
-    s = SVG('Every request has a path.', 'A live view of the ticketing purchase flow.', '01 / REQUEST TRAFFIC', 16)
+    s = SVG('티켓 구매 흐름', '', '', 16)
     incoming = 'M330 361 C402 361 431 361 515 361'
     returning = 'M515 414 C435 414 416 414 330 414'
     redis = 'M805 345 C930 345 928 252 1120 252'
@@ -160,32 +153,26 @@ def traffic():
     s.add('<ellipse cx="660" cy="405" rx="250" ry="228" fill="url(#halo)"/>')
     s.circle(660, 405, 183, stroke='#284c6c', extra='stroke-opacity=".5"')
     s.add('<g><animateTransform attributeName="transform" type="rotate" from="0 660 405" to="360 660 405" dur="24s" repeatCount="indefinite"/><circle cx="660" cy="405" r="183" fill="none" stroke="#62d4ff" stroke-opacity=".65" stroke-width="2" stroke-dasharray="28 260"/></g>')
-    s.node(90, 288, 240, 190, 'users', 'Clients', 'Browse · reserve · pay', BLUE, 'HTTP REQUESTS')
+    s.node(90, 288, 240, 190, 'users', '사용자', '', BLUE, '')
     s.rect(515, 260, 290, 300, extra='filter="url(#shadow)"')
     s.rect(607, 287, 106, 100, fill='#10243a', stroke='#3b6487', radius=26)
     s.icon('chip', 628, 305, 64, BLUE)
-    s.text(660, 429, 'Spring API', 32, weight=650, anchor='middle')
-    s.text(660, 459, 'Domain transactions', 19, MUTED, anchor='middle')
-    s.node(1120, 196, 370, 145, 'redis', 'Redis', '10s seat cache · Sorted Set tokens', PURPLE, 'CACHE / WAITING ROOM')
-    s.node(1120, 379, 370, 145, 'database', 'PostgreSQL', 'Row locks · atomic purchase state', GOLD, 'SOURCE OF TRUTH')
-    s.node(1120, 562, 370, 145, 'kafka', 'Kafka', 'ticket-issued-events', MINT, 'AFTER TRANSACTION COMMIT')
-    s.text(392, 337, 'REQUEST', 16, MUTED, mono=True)
-    s.text(394, 449, 'RESPONSE', 16, MUTED, mono=True)
+    s.text(660, 429, '예매 서버', 32, weight=650, anchor='middle')
+    s.node(1120, 196, 370, 145, 'redis', 'Redis', '', PURPLE, '조회 캐시 · 대기 순번')
+    s.node(1120, 379, 370, 145, 'database', 'PostgreSQL', '', GOLD, '예약 · 결제 저장')
+    s.node(1120, 562, 370, 145, 'kafka', 'Kafka', '', MINT, '구매 완료 이벤트')
     stages = [
-        ('Seat cache', 'Redis HIT → return cached seats', 0, 4, BLUE),
-        ('Waiting token', 'Issue / reuse / cancel → rank', 4, 8, PURPLE),
-        ('Reserve & order', 'Lock → hold → order → evict', 8, 12, GOLD),
-        ('Approve payment', 'Atomic COMMIT → ticket event', 12, 16, MINT),
+        ('캐시 조회', '', 0, 4, BLUE),
+        ('대기 순번', '', 4, 8, PURPLE),
+        ('예약 · 주문', '', 8, 12, GOLD),
+        ('결제 확정', '', 12, 16, MINT),
     ]
     for phase, (_, _, start, end, color) in enumerate(stages):
         cname = ('blue', 'purple', 'gold', 'mint')[phase]
         s.route(incoming, color, start, end)
         s.route(returning, MINT, start, end)
-        method = ('GET /seats', 'POST /waiting-room', 'POST /hold · /orders', 'POST /payments')[phase]
-        def badge():
-            s.rect(540, 486, 240, 43, fill='#0b1829', stroke=color, radius=14)
-            s.text(660, 514, method, 17, color, anchor='middle', mono=True)
-        s.group(s.fragment(badge), start, end)
+        action = ('캐시로 빠른 조회', '순번 토큰 발급', '좌석 잠금 후 예약', '구매 확정 후 발행')[phase]
+        s.group(s.fragment(lambda: s.text(660, 505, action, 23, color, anchor='middle')), start, end)
         for i in range(3):
             a = start + .18 + i * .92
             s.packet(incoming, a, a + .85, cname)
@@ -205,15 +192,13 @@ def traffic():
             s.route(kafka, MINT, 14.2, 16)
             s.packet(kafka, 14.32, 15.45, 'mint', 1.2)
             s.pulse(1160, 625, MINT, 15.1, 15.95, 34)
-        caption = ('CACHE HIT', 'TOKEN + RANK', 'PESSIMISTIC_WRITE', 'COMMIT → PUBLISH')[phase]
-        s.group(s.fragment(lambda: s.text(660, 630, caption, 23, color, anchor='middle', mono=True)), start, end)
     s.timeline(stages)
-    s.finish('01-request-traffic.svg', 'Animated clients, Spring API, Redis cache and waiting tokens, PostgreSQL reservations and payments, and Kafka ticket events after commit. Tokens do not enforce admission.')
+    s.finish('01-request-traffic.svg', '조회는 캐시로, 예약과 결제는 트랜잭션으로 처리합니다. 구매 확정 후 이벤트를 발행합니다. 대기 순번은 토큰 관리 기능입니다.')
 
 
 def concurrency():
-    s = SVG('Twenty requests. One owner.', 'One shared seat. Every request passes through the database lock.', '02 / SEAT CONTENTION', 12)
-    s.text(90, 222, '20 CONCURRENT CUSTOMERS', 17, MUTED, mono=True)
+    s = SVG('동시 예약, 중복 선점 방지', '', '', 12)
+    s.text(90, 222, '20명 동시 요청', 26, MUTED)
     points = [(118 + (i % 4) * 86, 282 + (i // 4) * 74) for i in range(20)]
     for i, (x, y) in enumerate(points):
         path = f'M{x + 24} {y} C500 {y} 506 408 620 408'
@@ -228,7 +213,6 @@ def concurrency():
         s.circle(x, y, 25, '#102038', '#355370')
         s.circle(x, y - 5, 5, 'none', BLUE, 'stroke-width="1.5"')
         s.add(f'<path d="M{x - 9} {y + 11}c0-13 18-13 18 0" fill="none" stroke="{BLUE}" stroke-width="1.5"/>')
-        s.text(x, y + 44, f'{i + 1:02}', 14, MUTED, anchor='middle', mono=True)
         color, start = (MINT, 3.15) if i == 0 else (RED, 4.9 + i * .105)
         overlay = f'<circle cx="{x}" cy="{y}" r="25" fill="#102038" stroke="{color}" stroke-width="2"/>'
         overlay += (f'<path d="M{x - 7} {y}l5 5 10-11" fill="none" stroke="{color}" stroke-width="2.5" stroke-linecap="round"/>' if i == 0 else f'<path d="M{x - 6} {y - 6}l12 12m-12 0 12-12" stroke="{color}" stroke-width="2" stroke-linecap="round"/>')
@@ -237,47 +221,44 @@ def concurrency():
     s.packet('M750 408 C799 408 807 408 857 408', 2.58, 3.15, 'gold', 1.1)
     s.rect(620, 345, 130, 130, fill='url(#glass)', stroke='#826c49', radius=28, extra='filter="url(#shadow)"')
     s.icon('lock', 654, 367, 62, GOLD)
-    s.text(685, 505, 'ROW LOCK', 19, GOLD, anchor='middle', mono=True)
-    s.text(685, 535, 'FOR UPDATE', 15, MUTED, anchor='middle', mono=True)
+    s.text(685, 505, '비관적 잠금', 25, GOLD, anchor='middle')
     s.pulse(685, 410, GOLD, 2.2, 4.1, 68)
     s.add('<ellipse cx="954" cy="529" rx="139" ry="27" fill="#000" opacity=".3"/><ellipse cx="954" cy="521" rx="134" ry="27" fill="#143440" stroke="#2b5260"/>')
-    s.text(954, 265, 'SEAT A1', 23, TEXT, weight=600, anchor='middle')
+    s.text(954, 265, '좌석 1개', 26, TEXT, weight=600, anchor='middle')
     s.rect(904, 302, 100, 121, fill='url(#seat)', stroke='#7096a9', radius=25, extra='stroke-width="2"')
     s.rect(891, 418, 126, 36, fill='url(#seat)', stroke='#7096a9', radius=16, extra='stroke-width="2"')
     s.rect(875, 379, 15, 75, fill='#1e4053', stroke='#7096a9', radius=7)
     s.rect(1018, 379, 15, 75, fill='#1e4053', stroke='#7096a9', radius=7)
     s.add('<path d="M906 454v43m97-43v43" stroke="#7096a9" stroke-width="9" stroke-linecap="round"/>')
     s.group('<rect x="904" y="302" width="100" height="121" rx="25" fill="none" stroke="#7af4c4" stroke-width="3" filter="url(#glow)"/><path d="m936 359 12 12 24-26" fill="none" stroke="#7af4c4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>', 3.15, 11.8)
-    s.group(s.fragment(lambda: s.text(954, 578, 'AVAILABLE', 20, BLUE, anchor='middle', mono=True)), 0, 3.15)
+    s.group(s.fragment(lambda: s.text(954, 578, '예약 가능', 25, BLUE, anchor='middle')), 0, 3.15)
     def held():
-        s.text(954, 578, 'HELD · 5 MIN', 20, MINT, anchor='middle', mono=True)
-        s.text(954, 608, 'No second owner.', 19, MUTED, anchor='middle')
+        s.text(954, 578, '5분 임시 예약', 25, MINT, anchor='middle')
     s.group(s.fragment(held), 3.15, 11.8)
     s.route('M1041 360 C1135 360 1135 297 1230 297', MINT, 3.15, 11.8)
     s.packet('M1041 360 C1135 360 1135 297 1230 297', 3.2, 3.9, 'mint', 1.1)
-    s.text(1230, 250, '201 CREATED', 17, MINT, mono=True)
-    s.group(s.fragment(lambda: s.text(1230, 339, '00', 86, MINT, weight=600)), 0, 3.9)
-    s.group(s.fragment(lambda: s.text(1230, 339, '01', 86, MINT, weight=600)), 3.9, 11.8)
-    s.text(1352, 331, 'reservation', 22, MUTED)
-    s.text(1230, 438, '409 CONFLICT', 17, RED, mono=True)
+    s.text(1230, 250, '예약 성공', 25, MINT)
+    s.group(s.fragment(lambda: s.text(1230, 339, '0', 86, MINT, weight=600)), 0, 3.9)
+    s.group(s.fragment(lambda: s.text(1230, 339, '1', 86, MINT, weight=600)), 3.9, 11.8)
+    s.text(1352, 331, '건', 25, MUTED)
+    s.text(1230, 438, '충돌 거절', 25, RED)
     for count in range(20):
         start = 0 if count == 0 else 4.9 + count * .105
         end = 4.9 + (count + 1) * .105 if count < 19 else 11.8
-        s.group(s.fragment(lambda n=count: s.text(1230, 527, f'{n:02}', 86, RED, weight=600)), start, end, fade=.025)
-    s.text(1352, 519, 'rejected', 22, MUTED)
-    s.text(1230, 584, 'SEAT_NOT_AVAILABLE', 15, RED, mono=True)
-    s.text(90, 666, 'One winner is illustrative. Actual ownership follows lock acquisition order.', 20, MUTED)
+        s.group(s.fragment(lambda n=count: s.text(1230, 527, str(n), 86, RED, weight=600)), start, end, fade=.025)
+    s.text(1352, 519, '건', 25, MUTED)
+    s.group(s.fragment(lambda: s.text(1230, 584, '중복 예약 0건', 25, MINT)), 7.2, 11.8)
     s.timeline([
-        ('Request burst', '20 clients → the same seat', 0, 2.3, BLUE),
-        ('Acquire & hold', 'AVAILABLE → HELD', 2.3, 4.4, GOLD),
-        ('Reject conflicts', 'Later lock holders see HELD', 4.4, 7.2, RED),
-        ('One owner', '1 hold / 19 conflicts / 0 duplicates', 7.2, 12, MINT),
+        ('동시 요청', '', 0, 2.3, BLUE),
+        ('좌석 잠금', '', 2.3, 4.4, GOLD),
+        ('충돌 거절', '', 4.4, 7.2, RED),
+        ('처리 완료', '', 7.2, 12, MINT),
     ])
-    s.finish('02-seat-contention.svg', 'Twenty concurrent seat requests converge on a PostgreSQL write lock. One client holds the seat for five minutes; nineteen receive conflicts. The chosen winner is illustrative.')
+    s.finish('02-seat-contention.svg', '동일 좌석에 20명이 동시에 예약을 요청합니다. 비관적 잠금으로 1건만 선점하고 나머지 19건은 충돌로 거절합니다. 성공 고객은 잠금 획득 순서에 따라 달라집니다.')
 
 
 def payments():
-    s = SVG('Same key. Same payment.', 'Sequential retries return the committed result instead of creating another ticket.', '03 / PAYMENT REPLAY', 12)
+    s = SVG('결제 재시도, 기존 결과 반환', '', '', 12)
     starts = (0, 4, 8)
     colors = (PURPLE, BLUE, RED)
     request_paths, return_paths = [], []
@@ -296,9 +277,8 @@ def payments():
     for i, y in enumerate((239, 373, 507)):
         color = colors[i]
         s.rect(60, y, 362, 107, radius=20)
-        s.text(85, y + 33, ('FIRST REQUEST', 'SAME ORDER · SAME AMOUNT', 'DIFFERENT ORDER · SAME KEY')[i], 18, color, mono=True)
-        s.text(85, y + 66, 'payment-request-001', 21, weight=600)
-        s.text(85, y + 91, 'order-002 · 120,000 KRW' if i == 2 else 'order-001 · 120,000 KRW', 17, MUTED, mono=True)
+        s.text(85, y + 43, ('첫 결제', '같은 결제 재시도', '멱등키 재사용')[i], 28, color, weight=600)
+        s.text(85, y + 82, ('새 멱등키', '동일 키 · 주문 · 금액', '다른 주문 또는 금액')[i], 23, MUTED)
         s.group(f'<rect x="60" y="{y}" width="362" height="107" rx="20" fill="none" stroke="{color}" stroke-width="2"/>', starts[i], starts[i] + 4)
         a = starts[i]
         cname = ('purple', 'blue', 'red')[i]
@@ -312,39 +292,32 @@ def payments():
     s.rect(555, 238, 294, 252, extra='filter="url(#shadow)"')
     s.circle(702, 311, 47, '#142b40', '#3d627d')
     s.icon('key', 675, 284, 54, PURPLE)
-    s.text(702, 397, 'PaymentService', 29, weight=650, anchor='middle')
-    s.text(702, 430, 'Lookup → validate → approve', 18, MUTED, anchor='middle')
-    s.text(702, 461, 'Idempotency-Key', 17, PURPLE, anchor='middle', mono=True)
+    s.text(702, 397, '결제 처리', 32, weight=650, anchor='middle')
+    s.text(702, 450, '멱등키 확인', 24, PURPLE, anchor='middle')
     s.rect(1100, 217, 440, 222, extra='filter="url(#shadow)"')
     s.icon('database', 1124, 239, 47, GOLD)
-    s.text(1188, 257, 'PostgreSQL', 27, weight=600)
-    s.text(1188, 283, 'THE COMMITTED PAYMENT', 14, GOLD, mono=True)
+    s.text(1188, 269, '결제 기록', 32, weight=600)
     s.add('<path d="M1124 305h392" stroke="#30445b"/>')
-    s.text(1126, 341, 'payment-request-001', 21, PURPLE, mono=True)
-    s.text(1126, 374, 'order-001 · 120,000 KRW', 19, MUTED, mono=True)
-    s.group(s.fragment(lambda: s.text(1126, 410, 'LOOKUP: NOT FOUND', 19, MUTED, mono=True)), 0, 2.75)
-    s.group(s.fragment(lambda: s.text(1126, 410, 'APPROVED · payment-001', 19, MINT, mono=True)), 2.75, 11.8)
-    s.node(1140, 535, 400, 139, 'kafka', 'Kafka', 'ticket-issued-events', MINT, 'FIRST APPROVAL / AFTER COMMIT')
+    s.group(s.fragment(lambda: s.text(1126, 377, '저장된 결과 없음', 28, MUTED)), 0, 2.75)
+    s.group(s.fragment(lambda: s.text(1126, 377, '승인 결과 1건', 32, MINT)), 2.75, 11.8)
+    s.node(1140, 535, 400, 139, 'kafka', '완료 이벤트', '', MINT, '구매 확정 후 발행')
     s.route(kafka, MINT, 2.85, 4)
     s.packet(kafka, 2.89, 3.79, 'mint', 1.2)
-    s.group(s.fragment(lambda: s.text(555, 562, 'ONE ATOMIC DATABASE TRANSACTION', 17, MUTED, mono=True)), 0, 4)
-    s.group(s.fragment(lambda: s.text(555, 562, 'EXISTING COMMITTED STATE', 17, MUTED, mono=True)), 4, 12)
-    items = (('Reservation', 'CONFIRMED'), ('Order', 'PAID'), ('Seat', 'SOLD'), ('Ticket', 'ISSUED'), ('Payment', 'APPROVED'))
-    for i, (name, status) in enumerate(items):
-        x = 555 + i * 106
-        s.rect(x, 582, 96, 75, fill='#101c2d', stroke='#2b425a', radius=14)
-        s.text(x + 48, 607, name, 17, MUTED, anchor='middle')
-        s.group(s.fragment(lambda x=x: s.text(x + 48, 635, 'PENDING', 16, MUTED, weight=600, anchor='middle')), 0, 2.75)
-        s.group(s.fragment(lambda x=x, value=status: s.text(x + 48, 635, value, 16, MINT, weight=600, anchor='middle')), 2.75, 11.8)
-    outcomes = ('NEW APPROVAL → COMMIT → EVENT', 'EXISTING PAYMENT → SAME RESULT', '409 · IDEMPOTENCY_KEY_REUSED')
+    s.group(s.fragment(lambda: s.text(555, 562, '한 트랜잭션으로 확정', 24, MUTED)), 0, 4)
+    s.group(s.fragment(lambda: s.text(555, 562, '완료 상태 유지', 24, MUTED)), 4, 12)
+    s.rect(555, 582, 520, 75, fill='#101c2d', stroke='#2b425a', radius=14)
+    states = '예약 · 주문 · 좌석 · 티켓'
+    s.group(s.fragment(lambda: s.text(815, 631, states, 26, MUTED, anchor='middle')), 0, 2.75)
+    s.group(s.fragment(lambda: s.text(815, 631, states, 26, MINT, anchor='middle')), 2.75, 11.8)
+    outcomes = ('신규 승인', '기존 결과 반환', '키 재사용 거절')
     for i, text in enumerate(outcomes):
-        s.group(s.fragment(lambda i=i, text=text: s.text(60, 684, text, 21, colors[i], mono=True)), starts[i], starts[i] + 4)
+        s.group(s.fragment(lambda i=i, text=text: s.text(60, 684, text, 28, colors[i], weight=600)), starts[i], starts[i] + 4)
     s.timeline([
-        ('First approval', 'Write state → COMMIT → publish', 0, 4, PURPLE),
-        ('Sequential replay', 'Same order + amount → same payment', 4, 8, BLUE),
-        ('Reject reused key', 'Different order or amount → conflict', 8, 12, RED),
+        ('첫 승인', '', 0, 4, PURPLE),
+        ('결제 재시도', '', 4, 8, BLUE),
+        ('키 재사용 거절', '', 8, 12, RED),
     ])
-    s.finish('03-payment-replay.svg', 'The initial payment writes all purchase state atomically, then publishes a ticket event after commit. A subsequent matching replay returns the same approved payment; key reuse for a different order or amount is rejected.')
+    s.finish('03-payment-replay.svg', '첫 결제는 예약, 주문, 좌석, 티켓을 함께 확정하고 완료 이벤트를 발행합니다. 첫 승인 이후 동일한 멱등키, 주문, 금액으로 재시도하면 기존 결과를 반환합니다. 다른 주문이나 금액에 같은 키를 재사용하면 거절합니다.')
 
 
 if __name__ == '__main__':
