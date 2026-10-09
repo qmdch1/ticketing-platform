@@ -1,5 +1,19 @@
 # Ticketing Platform
 
+![클라이언트 요청이 Spring API에서 Redis 캐시·대기열, PostgreSQL 예약·주문·결제, 커밋 후 Kafka 이벤트 발행으로 이어지는 트래픽 애니메이션](docs/animations/01-request-traffic.gif)
+
+좌석 조회, 대기열 토큰, 예약·주문, 결제·티켓 발급의 요청 흐름입니다. 움직이는 점은 요청·응답·이벤트를 나타냅니다.
+
+![20명이 동일 좌석을 요청하면 PostgreSQL 비관적 락으로 1건만 예약되고 나머지 19건은 충돌 응답을 받는 애니메이션](docs/animations/02-seat-contention.gif)
+
+동일 좌석에 들어온 **20건의 동시 예약 요청 → 1건 성공 / 19건 충돌 거절**을 보여줍니다. 화면의 첫 번째 고객은 설명용 예시이며, 실제 성공 고객은 락 획득 순서에 따라 달라집니다.
+
+![최초 결제는 상태 변경과 커밋 후 티켓 이벤트 발행을 수행하고 동일 멱등키의 후속 재시도는 기존 결과를 반환하며 다른 주문에 키를 재사용하면 거절하는 애니메이션](docs/animations/03-payment-replay.gif)
+
+최초 결제 완료 후 같은 `Idempotency-Key`·주문·금액으로 재시도하면 기존 결제 결과를 반환합니다. 다른 주문이나 금액에 키를 재사용하면 `409 CONFLICT`로 거절합니다.
+
+> 애니메이션은 현재 구현의 동작을 설명하는 반복 시각화이며 실측 트래픽 그래프가 아닙니다. 대기열은 순번 토큰 발급·재사용·취소 기능이며 자동 입장 제한은 구현되어 있지 않습니다. 결제 장면은 최초 요청 완료 이후의 재시도를 나타냅니다.
+
 | 검증 항목 | 환경 및 시나리오 | 결과 |
 | --- | --- | --- |
 | 테스트 환경 | Windows 11 Pro, OpenJDK 21, Docker 27.5.1, Gradle 9.5.1 | 통과 |
@@ -26,22 +40,6 @@
 - Kafka 기반 티켓 발급 이벤트 발행
 - Flyway 기반 스키마 관리
 - Actuator, Prometheus endpoint 노출
-
-## 문서 이미지
-
-실무 산출물처럼 빠르게 훑을 수 있도록 주요 문서를 이미지로 정리했습니다.
-
-![System Context](docs/images/01-system-context.svg)
-
-![Purchase Sequence](docs/images/02-purchase-sequence.svg)
-
-![State Transition](docs/images/03-state-transition.svg)
-
-![Data Model](docs/images/04-data-model.svg)
-
-![Concurrency and Idempotency](docs/images/05-concurrency-idempotency.svg)
-
-![Operations Roadmap](docs/images/06-operations-roadmap.svg)
 
 ## 기술 스택
 
@@ -153,3 +151,12 @@ DELETE /api/v1/performances/11111111-1111-1111-1111-111111111111/waiting-room/to
 - 결제 승인은 멱등키를 저장해 같은 요청의 재처리는 기존 결제 결과를 반환하고, 다른 주문/금액 재사용은 거절합니다.
 - 결제 승인 트랜잭션에서 예약, 주문, 좌석, 티켓을 함께 변경해 구매 완료 상태의 원자성을 보장합니다.
 - 티켓 발급 이벤트는 트랜잭션 커밋 이후 Kafka로 발행합니다.
+
+## 애니메이션 재생성
+
+GitHub README에서 바로 반복 재생되는 GIF를 사용합니다. 그림을 수정할 때는 Pillow와 Segoe UI, DejaVu Sans 또는 Arial 글꼴이 있는 Python 환경에서 다음을 실행합니다.
+
+```bash
+python -m pip install Pillow
+python docs/animations/render_traffic.py
+```
